@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LesionLog">
+<meta name="theme-color" content="#0D7A6B">
+<title>LesionLog</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root {
+  --teal:   #0D7A6B;
+  --teal-d: #063D35;
+  --teal-l: #E6F4F2;
+  --teal-m: #C2E8E2;
+  --ink:    #1A2B2A;
+  --ink-s:  #3D5452;
+  --ink-f:  #6B8280;
+  --paper:  #FFFFFF;
+  --sunk:   #F4F9F8;
+  --line:   #D4E6E3;
+  --danger: #a32d2d;
+  --danger-soft: #fcebeb;
+  --font:   -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--sunk);font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased;}
+#root{height:100%;display:flex;flex-direction:column;}
+
+/* ── Topbar ── */
+.topbar{
+  background:var(--teal-d);
+  padding:calc(var(--safe-top) + 12px) 16px 12px;
+  display:flex;align-items:center;gap:10px;
+  flex-shrink:0;
+}
+.topbar-back{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0 6px 0 0;line-height:1;}
+.topbar-logo{background:rgba(255,255,255,.15);font-family:monospace;font-size:10px;font-weight:700;letter-spacing:.08em;padding:3px 7px;border-radius:5px;color:#fff;}
+.topbar-title{font-size:17px;font-weight:700;color:#fff;flex:1;}
+.topbar-action{background:none;border:none;color:#C2E8E2;font-size:13px;font-weight:600;cursor:pointer;padding:6px 10px;border-radius:6px;}
+.topbar-action:active{background:rgba(255,255,255,.1);}
+
+/* ── Bottom nav ── */
+.bottom-nav{
+  background:var(--teal-d);
+  border-top:1px solid rgba(255,255,255,.1);
+  display:flex;
+  padding-bottom:var(--safe-bot);
+  flex-shrink:0;
+}
+.nav-btn{flex:1;background:none;border:none;color:rgba(255,255,255,.5);font-size:10px;font-weight:600;cursor:pointer;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--font);}
+.nav-btn .icon{font-size:20px;line-height:1;}
+.nav-btn.active{color:#fff;}
+.nav-btn.active .icon{transform:scale(1.1);}
+
+/* ── Screens ── */
+.screen{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.screen.active{display:flex;}
+
+/* ── Scroll content ── */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+/* ── Cards ── */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;margin:12px 14px;overflow:hidden;}
+.card-row{display:flex;align-items:center;padding:14px 16px;gap:12px;border-bottom:1px solid var(--line);}
+.card-row:last-child{border-bottom:none;}
+.card-row-icon{font-size:26px;flex-shrink:0;}
+.card-row-text{flex:1;min-width:0;}
+.card-row-title{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-row-sub{font-size:12px;color:var(--ink-f);margin-top:2px;}
+.card-row-right{color:var(--ink-f);font-size:20px;flex-shrink:0;}
+
+/* ── Section header ── */
+.section-hdr{padding:18px 14px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-f);}
+
+/* ── Empty state ── */
+.empty{text-align:center;padding:52px 24px;color:var(--ink-f);line-height:1.7;}
+.empty .icon{font-size:44px;display:block;margin-bottom:12px;}
+.empty strong{color:var(--ink-s);}
+
+/* ── Buttons ── */
+.btn{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--ink);display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:var(--teal);border-color:var(--teal);color:#fff;}
+.btn-danger{background:var(--danger-soft);border-color:var(--danger);color:var(--danger);}
+.btn-full{width:100%;justify-content:center;}
+.btn:active{opacity:.8;}
+.fab{position:fixed;bottom:calc(72px + var(--safe-bot));right:18px;width:54px;height:54px;border-radius:27px;background:var(--teal);color:#fff;font-size:28px;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(13,122,107,.4);display:flex;align-items:center;justify-content:center;z-index:10;}
+
+/* ── Forms ── */
+.form-body{padding:16px 14px;display:flex;flex-direction:column;gap:14px;}
+.field label{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-s);margin-bottom:5px;}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:15px;font-family:var(--font);color:var(--ink);background:var(--sunk);}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal);background:#fff;}
+.form-error{background:var(--danger-soft);color:var(--danger);font-size:13px;padding:10px 12px;border-radius:8px;}
+.form-actions{display:flex;gap:10px;padding:0 14px 24px;}
+
+/* ── Sheet (bottom modal) ── */
+.sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:none;}
+.sheet-backdrop.open{display:block;}
+.sheet{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:101;max-height:90vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);}
+.sheet.open{transform:translateY(0);}
+.sheet-handle{width:40px;height:4px;background:var(--line);border-radius:2px;margin:12px auto 0;}
+.sheet-title{font-size:17px;font-weight:700;padding:14px 18px 10px;border-bottom:1px solid var(--line);}
+.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:var(--safe-bot);}
+
+/* ── Patient detail ── */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 14px 0;}
+.detail-field label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-f);display:block;margin-bottom:3px;}
+.detail-field .val{font-size:14.5px;color:var(--ink);}
+
+/* ── Map card ── */
+.map-card{background:var(--paper);border:1px solid var(--line);border-radius:10px;margin:8px 14px;padding:13px 14px;display:flex;align-items:center;gap:12px;}
+.map-card-info{flex:1;min-width:0;}
+.map-card-date{font-size:14px;font-weight:600;}
+.map-card-meta{font-size:12px;color:var(--ink-f);margin-top:2px;}
+.map-card-arrow{color:var(--ink-f);font-size:18px;}
+
+/* ── Mapper wrapper ── */
+#mapper-wrap{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--sunk);}
+#mapper-wrap #app{max-width:100%;}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:calc(80px + var(--safe-bot));left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:500;z-index:200;opacity:0;transition:opacity .2s;white-space:nowrap;pointer-events:none;}
+#toast.show{opacity:1;}
+
+/* ── Settings ── */
+.settings-section{margin-bottom:8px;}
+.settings-row{background:var(--paper);border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.settings-row:first-child{border-radius:12px 12px 0 0;}
+.settings-row:last-child{border-bottom:none;border-radius:0 0 12px 12px;}
+.settings-row:only-child{border-radius:12px;border-bottom:none;}
+.settings-label{font-size:15px;color:var(--ink);}
+.settings-value{font-size:13px;color:var(--ink-f);}
+
+/* ── Login ── */
+.login-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;background:var(--teal-d);}
+.login-logo{background:rgba(255,255,255,.15);font-family:monospace;font-size:14px;font-weight:700;letter-spacing:.1em;padding:8px 16px;border-radius:10px;color:#fff;margin-bottom:16px;}
+.login-title{font-size:26px;font-weight:800;color:#fff;margin-bottom:4px;}
+.login-sub{font-size:14px;color:var(--teal-m);margin-bottom:32px;}
+.login-card{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:380px;}
+.login-card .field{margin-bottom:14px;}
+
+#mapper-wrap { height: 100%; overflow: hidden; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+// ── Sync module ───────────────────────────────────────────────────────────────
+'use strict';
+
+// ── Supabase sync for LesionLog ───────────────────────────────────────────────
+// Works in both PWA (browser) and Electron (Node.js via fetch)
+// Uses the Supabase REST API directly — no SDK needed
+
+const SUPABASE_URL = 'https://sqarjflzicjeqhzzprfx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_KYFtfG7U3TxX0dqXrHKfBg_S_6IC9JA';
+
+const headers = {
+  'Content-Type': 'application/json',
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Prefer': 'resolution=merge-duplicates',
+};
+
+// ── Low-level REST helpers ────────────────────────────────────────────────────
+async function sbSelect(table, filter = '') {
+  const url = `${SUPABASE_URL}/rest/v1/${table}?${filter}&order=updated_at.asc`;
+  const res = await fetch(url, { headers });
+  if (!res.ok) throw new Error(`Supabase select ${table} failed: ${res.status}`);
+  return res.json();
+}
+
+async function sbUpsert(table, rows) {
+  if (!rows || rows.length === 0) return [];
+  const url = `${SUPABASE_URL}/rest/v1/${table}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { ...headers, 'Prefer': 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(rows),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Supabase upsert ${table} failed: ${res.status} ${txt}`);
+  }
+  return res.json();
+}
+
+// ── Sync logic ────────────────────────────────────────────────────────────────
+// Strategy: "last write wins" based on updated_at timestamp
+// Both local and remote rows are upserted — newest timestamp wins
+
+async function syncAll(localData, onProgress) {
+  const log = onProgress || (() => {});
+
+  log('Connecting to cloud…');
+
+  // ── 1. Push local clinic ──────────────────────────────────────────────────
+  if (localData.clinic) {
+    log('Syncing clinic settings…');
+    await sbUpsert('clinic', [{
+      id:          localData.clinic.sync_id || generateUUID(),
+      name:        localData.clinic.name || '',
+      license_key: localData.clinic.license_key || '',
+    }]);
+  }
+
+  // ── 2. Push local vets ────────────────────────────────────────────────────
+  log('Syncing vet accounts…');
+  const localVets = (localData.vets || []).map(v => ({
+    id:         v.sync_id || generateUUID(),
+    name:       v.name,
+    email:      v.email,
+    pw_hash:    v.pw_hash,
+    role:       v.role || 'vet',
+    updated_at: v.updated_at || new Date().toISOString(),
+  }));
+  if (localVets.length > 0) await sbUpsert('vets', localVets);
+
+  // ── 3. Push local patients ────────────────────────────────────────────────
+  log('Syncing patients…');
+  const localPatients = (localData.patients || []).map(p => ({
+    id:          p.sync_id || generateUUID(),
+    name:        p.name,
+    species:     p.species,
+    breed:       p.breed || null,
+    owner_name:  p.owner_name || null,
+    patient_id:  p.patient_id || null,
+    dob:         p.dob || null,
+    sex:         p.sex || null,
+    notes:       p.notes || null,
+    updated_at:  p.updated_at || new Date().toISOString(),
+    created_at:  p.created_at || new Date().toISOString(),
+  }));
+  if (localPatients.length > 0) await sbUpsert('patients', localPatients);
+
+  // ── 4. Push local maps ────────────────────────────────────────────────────
+  log('Syncing lesion maps…');
+  const localMaps = (localData.maps || []).map(m => ({
+    id:         m.sync_id || generateUUID(),
+    patient_id: m.patient_sync_id || m.patient_id,
+    vet_name:   m.vet_name || '',
+    exam_date:  m.exam_date,
+    species:    m.species,
+    view:       m.view,
+    lesions:    m.lesions || [],
+    notes:      m.notes || '',
+    updated_at: m.updated_at || new Date().toISOString(),
+    created_at: m.created_at || new Date().toISOString(),
+  }));
+  if (localMaps.length > 0) await sbUpsert('lesion_maps', localMaps);
+
+  // ── 5. Pull all remote data ───────────────────────────────────────────────
+  log('Downloading from cloud…');
+  const [remoteVets, remotePatients, remoteMaps] = await Promise.all([
+    sbSelect('vets'),
+    sbSelect('patients', 'deleted_at=is.null'),
+    sbSelect('lesion_maps', 'deleted_at=is.null'),
+  ]);
+
+  log('Sync complete ✓');
+
+  return {
+    vets:     remoteVets,
+    patients: remotePatients,
+    maps:     remoteMaps,
+  };
+}
+
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+// Export for both browser (PWA) and Node.js (Electron)
+window.LesionLogSync = { syncAll, generateUUID, SUPABASE_URL, SUPABASE_KEY };
+
+
+// ── Standalone Mapper ─────────────────────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LesionLog PWA — Standalone Mapper Module (no external dependencies)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const LESION_TYPES = [
+  { id: "mass",        label: "Mass / lump",        color: "#a32d2d" },
+  { id: "wound",       label: "Wound / laceration",  color: "#d85a30" },
+  { id: "alopecia",    label: "Alopecia",            color: "#ba7517" },
+  { id: "erythema",    label: "Erythema / rash",     color: "#d4537e" },
+  { id: "pustule",     label: "Pustule / pyoderma",  color: "#993556" },
+  { id: "scar",        label: "Scar",                color: "#5f5e5a" },
+  { id: "swelling",    label: "Swelling / edema",    color: "#185fa5" },
+  { id: "anal_gland",  label: "Anal gland issue",    color: "#a07040" },
+  { id: "parasite",    label: "Parasite / tick",     color: "#3b6d11" },
+  { id: "ulcer",       label: "Ulcer",               color: "#712b13" },
+  { id: "other",       label: "Other",               color: "#534ab7" }
+];
+
+const MAPPER_DIAGRAMS = {
+  dog: {
+    lateral_right: `<svg class="diagram" viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
+      <rect width="600" height="360" fill="#f4f6f7"/>
+      <g stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 158 185 C 120 178, 85 162, 60 135 C 54 128, 60 119, 68 122 C 95 142, 125 162, 162 172 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="222" y="234" width="24" height="82" rx="11" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <rect x="216" y="310" width="36" height="16" rx="7" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <rect x="410" y="232" width="24" height="80" rx="11" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <rect x="404" y="306" width="36" height="16" rx="7" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <path d="M 152 195 C 152 161, 218 133, 300 133 C 370 133, 410 145, 430 165 C 460 168, 472 188, 472 210 C 472 240, 452 257, 425 257 C 350 257, 220 257, 195 250 C 165 242, 152 222, 152 195 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="186" y="218" width="30" height="110" rx="14" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="179" y="321" width="44" height="19" rx="9" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="373" y="216" width="30" height="112" rx="14" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="366" y="321" width="44" height="19" rx="9" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <path d="M 388 150 C 398 120, 412 95, 432 75 L 472 88 C 462 112, 452 138, 442 160 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <ellipse cx="478" cy="78" rx="46" ry="40" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <ellipse cx="522" cy="92" rx="26" ry="20" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <path d="M 488 48 C 496 26, 492 6, 476 2 C 464 -1, 456 11, 460 25 C 463 36, 475 45, 488 48 Z" fill="#c7d0d8" stroke="#8d99a3" stroke-width="2.5"/>
+      </g>
+      <circle cx="475" cy="65" r="4" fill="#5b6670"/>
+      <ellipse cx="544" cy="88" rx="5" ry="4" fill="#5b6670"/>
+      <path d="M 522 105 C 515 112, 505 114, 496 111" fill="none" stroke="#5b6670" stroke-width="1.8"/>
+      ${jointMarker(201,286,'stifle')}${jointMarker(388,283,'elbow')}
+      ${legLabel(201,244,'R')}${legLabel(234,244,'L')}
+      ${legLabel(388,242,'R')}${legLabel(422,242,'L')}
+    </svg>`,
+    lateral_left:  `<svg class="diagram" viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
+      <rect width="600" height="360" fill="#f4f6f7"/>
+      <g stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 442 185 C 480 178, 515 162, 540 135 C 546 128, 540 119, 532 122 C 505 142, 475 162, 438 172 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="354" y="234" width="24" height="82" rx="11" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <rect x="348" y="310" width="36" height="16" rx="7" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <rect x="166" y="232" width="24" height="80" rx="11" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <rect x="160" y="306" width="36" height="16" rx="7" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <path d="M 448 195 C 448 161, 382 133, 300 133 C 230 133, 190 145, 170 165 C 140 168, 128 188, 128 210 C 128 240, 148 257, 175 257 C 250 257, 380 257, 405 250 C 435 242, 448 222, 448 195 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="384" y="218" width="30" height="110" rx="14" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="377" y="321" width="44" height="19" rx="9" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="197" y="216" width="30" height="112" rx="14" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="190" y="321" width="44" height="19" rx="9" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <path d="M 212 150 C 202 120, 188 95, 168 75 L 128 88 C 138 112, 148 138, 158 160 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <ellipse cx="122" cy="78" rx="46" ry="40" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <ellipse cx="78" cy="92" rx="26" ry="20" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <path d="M 112 48 C 104 26, 108 6, 124 2 C 136 -1, 144 11, 140 25 C 137 36, 125 45, 112 48 Z" fill="#c7d0d8" stroke="#8d99a3" stroke-width="2.5"/>
+      </g>
+      <circle cx="125" cy="65" r="4" fill="#5b6670"/>
+      <ellipse cx="56" cy="88" rx="5" ry="4" fill="#5b6670"/>
+      <path d="M 78 105 C 85 112, 95 114, 104 111" fill="none" stroke="#5b6670" stroke-width="1.8"/>
+      ${jointMarker(399,286,'stifle')}${jointMarker(212,283,'elbow')}
+      ${legLabel(399,244,'L')}${legLabel(366,244,'R')}
+      ${legLabel(212,242,'L')}${legLabel(178,242,'R')}
+    </svg>`,
+    dorsal:        `<svg class="diagram" viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
+      <rect width="600" height="360" fill="#f4f6f7"/>
+      <g fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 175 180 C 140 178, 105 172, 75 160 C 66 156, 66 145, 76 144 C 108 150, 142 158, 178 165 Z"/>
+        <path d="M 372 145 C 360 128, 345 108, 335 85 C 330 73, 338 64, 349 67 C 362 71, 372 88, 380 108 C 386 122, 388 136, 384 148 Z"/>
+        <path d="M 372 215 C 360 232, 345 252, 335 275 C 330 287, 338 296, 349 293 C 362 289, 372 272, 380 252 C 386 238, 388 224, 384 212 Z"/>
+        <path d="M 222 142 C 208 126, 192 106, 180 84 C 174 72, 182 62, 193 66 C 206 71, 218 90, 228 110 C 234 124, 237 136, 233 148 Z"/>
+        <path d="M 222 218 C 208 234, 192 254, 180 276 C 174 288, 182 298, 193 294 C 206 289, 218 270, 228 250 C 234 236, 237 224, 233 212 Z"/>
+        <ellipse cx="343" cy="72" rx="16" ry="13" transform="rotate(-25 343 72)"/>
+        <ellipse cx="343" cy="288" rx="16" ry="13" transform="rotate(25 343 288)"/>
+        <ellipse cx="188" cy="70" rx="16" ry="13" transform="rotate(-30 188 70)"/>
+        <ellipse cx="188" cy="290" rx="16" ry="13" transform="rotate(30 188 290)"/>
+        <ellipse cx="290" cy="180" rx="155" ry="65"/>
+        <rect x="420" y="158" width="55" height="44" rx="18"/>
+        <ellipse cx="495" cy="180" rx="48" ry="42"/>
+        <ellipse cx="545" cy="180" rx="22" ry="24"/>
+        <path d="M 478 145 C 470 122, 474 100, 490 95 C 500 92, 508 104, 504 118 C 500 132, 490 142, 478 145 Z" fill="#c7d0d8"/>
+        <path d="M 478 215 C 470 238, 474 260, 490 265 C 500 268, 508 256, 504 242 C 500 228, 490 218, 478 215 Z" fill="#c7d0d8"/>
+      </g>
+      <ellipse cx="566" cy="180" rx="4" ry="5" fill="#5b6670"/>
+      ${jointMarker(355,118,'elbow')}${jointMarker(355,242,'elbow')}
+      ${jointMarker(205,118,'stifle')}${jointMarker(205,242,'stifle')}
+      ${legLabel(355,98,'L')}${legLabel(355,262,'R')}
+      ${legLabel(205,98,'L')}${legLabel(205,262,'R')}
+    </svg>`,
+    ventral:       `<svg class="diagram" viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
+      <rect width="600" height="360" fill="#f4f6f7"/>
+      <g fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 175 180 C 140 178, 105 172, 75 160 C 66 156, 66 145, 76 144 C 108 150, 142 158, 178 165 Z"/>
+        <path d="M 372 145 C 360 128, 345 108, 335 85 C 330 73, 338 64, 349 67 C 362 71, 372 88, 380 108 C 386 122, 388 136, 384 148 Z"/>
+        <path d="M 372 215 C 360 232, 345 252, 335 275 C 330 287, 338 296, 349 293 C 362 289, 372 272, 380 252 C 386 238, 388 224, 384 212 Z"/>
+        <path d="M 222 142 C 208 126, 192 106, 180 84 C 174 72, 182 62, 193 66 C 206 71, 218 90, 228 110 C 234 124, 237 136, 233 148 Z"/>
+        <path d="M 222 218 C 208 234, 192 254, 180 276 C 174 288, 182 298, 193 294 C 206 289, 218 270, 228 250 C 234 236, 237 224, 233 212 Z"/>
+        <ellipse cx="343" cy="72" rx="17" ry="14" transform="rotate(-25 343 72)"/>
+        <ellipse cx="343" cy="288" rx="17" ry="14" transform="rotate(25 343 288)"/>
+        <ellipse cx="188" cy="70" rx="17" ry="14" transform="rotate(-30 188 70)"/>
+        <ellipse cx="188" cy="290" rx="17" ry="14" transform="rotate(30 188 290)"/>
+        <ellipse cx="290" cy="180" rx="155" ry="65"/>
+        <rect x="420" y="160" width="55" height="40" rx="16"/>
+        <ellipse cx="495" cy="180" rx="46" ry="38"/>
+        <ellipse cx="548" cy="180" rx="24" ry="22"/>
+      </g>
+      <g fill="#c7d0d8">
+        <circle cx="343" cy="68" r="4"/>
+        <circle cx="343" cy="284" r="4"/>
+        <circle cx="188" cy="66" r="4"/>
+        <circle cx="188" cy="286" r="4"/>
+      </g>
+      <path d="M 548 158 C 552 168, 552 178, 548 188" fill="none" stroke="#5b6670" stroke-width="1.5" opacity="0.6"/>
+      <ellipse cx="568" cy="180" rx="3.5" ry="6" fill="#5b6670"/>
+      ${jointMarker(355,118,'elbow')}${jointMarker(355,242,'elbow')}
+      ${jointMarker(205,118,'stifle')}${jointMarker(205,242,'stifle')}
+      ${legLabel(355,98,'R')}${legLabel(355,262,'L')}
+      ${legLabel(205,98,'R')}${legLabel(205,262,'L')}
+    </svg>`,
+    caudal:        `<svg class="diagram" viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="360" fill="#f4f6f7"/>
+  <g fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="72" y="195" width="32" height="110" rx="14"/>
+    <rect x="65" y="298" width="46" height="20" rx="8"/>
+    <rect x="496" y="195" width="32" height="110" rx="14"/>
+    <rect x="489" y="298" width="46" height="20" rx="8"/>
+    <ellipse cx="300" cy="200" rx="200" ry="148"/>
+    <ellipse cx="300" cy="35" rx="24" ry="20"/>
+    <path d="M 276 38 L 276 28 L 324 28 L 324 38" fill="#dde3e8" stroke="none"/>
+  </g>
+  <ellipse cx="300" cy="80" rx="52" ry="38" fill="#ccd3d9" stroke="none"/>
+  <circle cx="300" cy="75" r="16" fill="#b8c2ca" stroke="#8d99a3" stroke-width="2"/>
+  <circle cx="300" cy="75" r="6" fill="#7a8890"/>
+  <ellipse cx="268" cy="93" rx="20" ry="14" fill="#f0dfc8" stroke="#a07040" stroke-width="2" stroke-dasharray="4,2.5"/>
+  <ellipse cx="332" cy="93" rx="20" ry="14" fill="#f0dfc8" stroke="#a07040" stroke-width="2" stroke-dasharray="4,2.5"/>
+  <text x="238" y="118" font-size="11" font-weight="700" fill="#7a5030" font-family="Arial, sans-serif" text-anchor="middle">L anal gland</text>
+  <text x="362" y="118" font-size="11" font-weight="700" fill="#7a5030" font-family="Arial, sans-serif" text-anchor="middle">R anal gland</text>
+  <text x="300" y="63" font-size="10" fill="#5b6670" font-family="Arial, sans-serif" text-anchor="middle">anus</text>
+  ${legLabel(88,252,'L')}${legLabel(512,252,'R')}
+  <text x="300" y="352" font-size="10" fill="#9aa5ad" font-family="Arial, sans-serif" text-anchor="middle">Caudal view — standing behind the animal. R is on your right, L is on your left.</text>
+</svg>`,
+  },
+  cat: {
+    lateral_right: `<svg class="diagram" viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
+      <rect width="600" height="360" fill="#f4f6f7"/>
+      <g stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 160 200 C 120 210, 85 205, 60 180 C 45 165, 42 145, 52 130 C 58 122, 68 125, 68 135 C 64 148, 66 162, 78 173 C 98 192, 128 195, 158 188 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="222" y="230" width="22" height="68" rx="10" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <rect x="216" y="292" width="34" height="14" rx="6" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <rect x="405" y="222" width="22" height="66" rx="10" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <rect x="399" y="282" width="34" height="14" rx="6" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <path d="M 155 210 C 153 178, 210 152, 280 150 C 335 149, 370 158, 388 175 C 412 178, 422 195, 420 213 C 419 232, 402 245, 380 244 C 320 248, 230 248, 195 240 C 168 234, 156 224, 155 210 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="188" y="215" width="28" height="90" rx="13" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="181" y="298" width="42" height="17" rx="8" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="370" y="212" width="28" height="88" rx="13" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="363" y="294" width="42" height="17" rx="8" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <path d="M 388 175 C 395 152, 405 132, 420 118 L 452 128 C 444 148, 436 168, 428 188 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <ellipse cx="455" cy="112" rx="40" ry="36" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <ellipse cx="492" cy="120" rx="16" ry="13" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <path d="M 432 82 L 422 48 C 420 42, 426 38, 430 42 L 450 72 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <path d="M 472 80 L 484 46 C 486 40, 480 36, 476 41 L 458 70 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+      </g>
+      <ellipse cx="463" cy="105" rx="3.5" ry="4.5" fill="#5b6670"/>
+      <path d="M 502 117 L 496 124 L 506 124 Z" fill="#5b6670"/>
+      <path d="M 506 120 L 524 116 M 506 124 L 524 126 M 506 128 L 522 134" fill="none" stroke="#9aa5ad" stroke-width="1"/>
+      ${jointMarker(202,272,'stifle')}${jointMarker(384,268,'elbow')}
+      ${legLabel(202,232,'R')}${legLabel(233,232,'L')}
+      ${legLabel(384,229,'R')}${legLabel(416,229,'L')}
+    </svg>`,
+    lateral_left:  `<svg class="diagram" viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
+      <rect width="600" height="360" fill="#f4f6f7"/>
+      <g stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 440 200 C 480 210, 515 205, 540 180 C 555 165, 558 145, 548 130 C 542 122, 532 125, 532 135 C 536 148, 534 162, 522 173 C 502 192, 472 195, 442 188 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="356" y="230" width="22" height="68" rx="10" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <rect x="350" y="292" width="34" height="14" rx="6" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <rect x="173" y="222" width="22" height="66" rx="10" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <rect x="167" y="282" width="34" height="14" rx="6" fill="#cdd4db" stroke="#9daab3" stroke-width="2"/>
+        <path d="M 445 210 C 447 178, 390 152, 320 150 C 265 149, 230 158, 212 175 C 188 178, 178 195, 180 213 C 181 232, 198 245, 220 244 C 280 248, 370 248, 405 240 C 432 234, 444 224, 445 210 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="384" y="215" width="28" height="90" rx="13" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="377" y="298" width="42" height="17" rx="8" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="202" y="212" width="28" height="88" rx="13" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <rect x="195" y="294" width="42" height="17" rx="8" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <path d="M 212 175 C 205 152, 195 132, 180 118 L 148 128 C 156 148, 164 168, 172 188 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <ellipse cx="145" cy="112" rx="40" ry="36" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <ellipse cx="108" cy="120" rx="16" ry="13" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <path d="M 168 82 L 178 48 C 180 42, 174 38, 170 42 L 150 72 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+        <path d="M 128 80 L 116 46 C 114 40, 120 36, 124 41 L 142 70 Z" fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5"/>
+      </g>
+      <ellipse cx="137" cy="105" rx="3.5" ry="4.5" fill="#5b6670"/>
+      <path d="M 98 117 L 104 124 L 94 124 Z" fill="#5b6670"/>
+      <path d="M 94 120 L 76 116 M 94 124 L 76 126 M 94 128 L 78 134" fill="none" stroke="#9aa5ad" stroke-width="1"/>
+      ${jointMarker(398,272,'stifle')}${jointMarker(216,268,'elbow')}
+      ${legLabel(398,232,'L')}${legLabel(367,232,'R')}
+      ${legLabel(216,229,'L')}${legLabel(184,229,'R')}
+    </svg>`,
+    dorsal:        `<svg class="diagram" viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
+      <rect width="600" height="360" fill="#f4f6f7"/>
+      <g fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 165 180 C 130 178, 95 172, 65 155 C 50 146, 42 128, 50 113 C 56 102, 70 103, 72 115 C 68 124, 70 134, 78 142 C 100 162, 132 168, 168 165 Z"/>
+        <path d="M 358 145 C 348 130, 336 112, 328 92 C 323 80, 330 71, 341 74 C 352 78, 361 94, 368 112 C 373 124, 375 136, 371 147 Z"/>
+        <path d="M 358 215 C 348 230, 336 248, 328 268 C 323 280, 330 289, 341 286 C 352 282, 361 266, 368 248 C 373 236, 375 224, 371 213 Z"/>
+        <path d="M 215 140 C 203 125, 190 106, 180 86 C 175 75, 182 66, 192 70 C 203 75, 213 92, 221 110 C 226 122, 229 132, 226 143 Z"/>
+        <path d="M 215 220 C 203 235, 190 254, 180 274 C 175 285, 182 294, 192 290 C 203 285, 213 268, 221 250 C 226 238, 229 228, 226 217 Z"/>
+        <ellipse cx="334" cy="80" rx="14" ry="11" transform="rotate(-25 334 80)"/>
+        <ellipse cx="334" cy="280" rx="14" ry="11" transform="rotate(25 334 280)"/>
+        <ellipse cx="186" cy="78" rx="14" ry="11" transform="rotate(-30 186 78)"/>
+        <ellipse cx="186" cy="282" rx="14" ry="11" transform="rotate(30 186 282)"/>
+        <ellipse cx="290" cy="180" rx="148" ry="60"/>
+        <rect x="415" y="160" width="48" height="40" rx="16"/>
+        <ellipse cx="498" cy="180" rx="44" ry="40"/>
+        <path d="M 478 148 L 462 118 C 459 112, 465 107, 470 112 L 492 142 Z"/>
+        <path d="M 518 148 L 534 118 C 537 112, 531 107, 526 112 L 504 142 Z"/>
+      </g>
+      <path d="M 538 173 L 538 187 L 549 180 Z" fill="#5b6670"/>
+      <path d="M 545 175 L 565 168 M 548 180 L 568 180 M 545 185 L 565 192" fill="none" stroke="#9aa5ad" stroke-width="1"/>
+      ${jointMarker(350,113,'elbow')}${jointMarker(350,245,'elbow')}
+      ${jointMarker(197,108,'stifle')}${jointMarker(197,250,'stifle')}
+      ${legLabel(350,93,'L')}${legLabel(350,265,'R')}
+      ${legLabel(197,88,'L')}${legLabel(197,270,'R')}
+    </svg>`,
+    ventral:       `<svg class="diagram" viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
+      <rect width="600" height="360" fill="#f4f6f7"/>
+      <g fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 165 180 C 130 178, 95 172, 65 155 C 50 146, 42 128, 50 113 C 56 102, 70 103, 72 115 C 68 124, 70 134, 78 142 C 100 162, 132 168, 168 165 Z"/>
+        <path d="M 358 145 C 348 130, 336 112, 328 92 C 323 80, 330 71, 341 74 C 352 78, 361 94, 368 112 C 373 124, 375 136, 371 147 Z"/>
+        <path d="M 358 215 C 348 230, 336 248, 328 268 C 323 280, 330 289, 341 286 C 352 282, 361 266, 368 248 C 373 236, 375 224, 371 213 Z"/>
+        <path d="M 215 140 C 203 125, 190 106, 180 86 C 175 75, 182 66, 192 70 C 203 75, 213 92, 221 110 C 226 122, 229 132, 226 143 Z"/>
+        <path d="M 215 220 C 203 235, 190 254, 180 274 C 175 285, 182 294, 192 290 C 203 285, 213 268, 221 250 C 226 238, 229 228, 226 217 Z"/>
+        <ellipse cx="334" cy="80" rx="15" ry="12" transform="rotate(-25 334 80)"/>
+        <ellipse cx="334" cy="280" rx="15" ry="12" transform="rotate(25 334 280)"/>
+        <ellipse cx="186" cy="78" rx="15" ry="12" transform="rotate(-30 186 78)"/>
+        <ellipse cx="186" cy="282" rx="15" ry="12" transform="rotate(30 186 282)"/>
+        <ellipse cx="290" cy="180" rx="148" ry="60"/>
+        <rect x="415" y="162" width="48" height="36" rx="14"/>
+        <ellipse cx="498" cy="180" rx="42" ry="36"/>
+        <ellipse cx="540" cy="180" rx="18" ry="17"/>
+      </g>
+      <g fill="#c7d0d8">
+        <circle cx="334" cy="76" r="3.5"/>
+        <circle cx="334" cy="284" r="3.5"/>
+        <circle cx="186" cy="74" r="3.5"/>
+        <circle cx="186" cy="286" r="3.5"/>
+      </g>
+      <path d="M 540 163 C 543 172, 543 188, 540 197" fill="none" stroke="#5b6670" stroke-width="1.3" opacity="0.6"/>
+      <ellipse cx="556" cy="180" rx="3" ry="5" fill="#5b6670"/>
+      ${jointMarker(350,113,'elbow')}${jointMarker(350,245,'elbow')}
+      ${jointMarker(197,108,'stifle')}${jointMarker(197,250,'stifle')}
+      ${legLabel(350,93,'R')}${legLabel(350,265,'L')}
+      ${legLabel(197,88,'R')}${legLabel(197,270,'L')}
+    </svg>`,
+    caudal:        `<svg class="diagram" viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="360" fill="#f4f6f7"/>
+  <g fill="#dde3e8" stroke="#8d99a3" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="72" y="195" width="32" height="110" rx="14"/>
+    <rect x="65" y="298" width="46" height="20" rx="8"/>
+    <rect x="496" y="195" width="32" height="110" rx="14"/>
+    <rect x="489" y="298" width="46" height="20" rx="8"/>
+    <ellipse cx="300" cy="200" rx="200" ry="148"/>
+    <ellipse cx="300" cy="35" rx="24" ry="20"/>
+    <path d="M 276 38 L 276 28 L 324 28 L 324 38" fill="#dde3e8" stroke="none"/>
+  </g>
+  <ellipse cx="300" cy="80" rx="52" ry="38" fill="#ccd3d9" stroke="none"/>
+  <circle cx="300" cy="75" r="16" fill="#b8c2ca" stroke="#8d99a3" stroke-width="2"/>
+  <circle cx="300" cy="75" r="6" fill="#7a8890"/>
+  <ellipse cx="268" cy="93" rx="20" ry="14" fill="#f0dfc8" stroke="#a07040" stroke-width="2" stroke-dasharray="4,2.5"/>
+  <ellipse cx="332" cy="93" rx="20" ry="14" fill="#f0dfc8" stroke="#a07040" stroke-width="2" stroke-dasharray="4,2.5"/>
+  <text x="238" y="118" font-size="11" font-weight="700" fill="#7a5030" font-family="Arial, sans-serif" text-anchor="middle">L anal gland</text>
+  <text x="362" y="118" font-size="11" font-weight="700" fill="#7a5030" font-family="Arial, sans-serif" text-anchor="middle">R anal gland</text>
+  <text x="300" y="63" font-size="10" fill="#5b6670" font-family="Arial, sans-serif" text-anchor="middle">anus</text>
+  ${legLabel(88,252,'L')}${legLabel(512,252,'R')}
+  <text x="300" y="352" font-size="10" fill="#9aa5ad" font-family="Arial, sans-serif" text-anchor="middle">Caudal view — standing behind the animal. R is on your right, L is on your left.</text>
+</svg>`,
+  },
+};
+
+const VIEW_LABELS = {
+  lateral_right: 'Right lateral',
+  lateral_left:  'Left lateral',
+  dorsal:        'Dorsal',
+  ventral:       'Ventral',
+  caudal:        'Caudal',
+};
+
+// ── Mapper state ──────────────────────────────────────────────────────────────
+let mapperState = {
+  species: 'dog',
+  view: 'lateral_right',
+  lesions: [],
+  nextNum: 1,
+  patient: { name: '', id: '', vet: '', date: '' },
+  editing: null, // lesion being edited
+};
+
+let mapperContainer = null; // DOM element to render into
+let mapperSaveCallback = null;
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function initPWAMapper(container, initState, onSave) {
+  mapperContainer = container;
+  if (initState) {
+    mapperState.species = initState.species || 'dog';
+    mapperState.view    = initState.view    || 'lateral_right';
+    mapperState.lesions = initState.lesions ? [...initState.lesions] : [];
+    mapperState.nextNum = initState.nextNum || 1;
+    if (initState.patient) Object.assign(mapperState.patient, initState.patient);
+  }
+  mapperSaveCallback = onSave || null;
+  renderPWAMapper();
+}
+
+function getMapperState() {
+  return {
+    species: mapperState.species,
+    view:    mapperState.view,
+    lesions: [...mapperState.lesions],
+    nextNum: mapperState.nextNum,
+    patient: { ...mapperState.patient },
+  };
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderPWAMapper() {
+  if (!mapperContainer) return;
+
+  const svg = MAPPER_DIAGRAMS[mapperState.species][mapperState.view];
+  const viewLesions = mapperState.lesions.filter(l => l.view === mapperState.view);
+
+  mapperContainer.innerHTML = `
+    <div style="display:flex;flex-direction:column;height:100%;background:#f4f6f7;">
+
+      <!-- Species + View tabs -->
+      <div style="background:#fff;border-bottom:1px solid #D4E6E3;padding:10px 14px;flex-shrink:0;">
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          ${['dog','cat'].map(sp => `
+            <button onclick="setMapperSpecies('${sp}')"
+              style="flex:1;padding:7px;border-radius:7px;border:1.5px solid ${mapperState.species===sp?'#0D7A6B':'#D4E6E3'};
+                     background:${mapperState.species===sp?'#E6F4F2':'#fff'};font-size:13px;font-weight:600;
+                     color:${mapperState.species===sp?'#0D7A6B':'#6B8280'};cursor:pointer;">
+              ${sp==='dog'?'Dog':'Cat'}
+            </button>
+          `).join('')}
+        </div>
+        <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:2px;">
+          ${Object.keys(VIEW_LABELS).map(v => `
+            <button onclick="setMapperView('${v}')"
+              style="flex-shrink:0;padding:5px 10px;border-radius:6px;border:1.5px solid ${mapperState.view===v?'#0D7A6B':'#D4E6E3'};
+                     background:${mapperState.view===v?'#0D7A6B':'#fff'};font-size:11px;font-weight:600;
+                     color:${mapperState.view===v?'#fff':'#6B8280'};cursor:pointer;white-space:nowrap;">
+              ${VIEW_LABELS[v]}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Diagram -->
+      <div style="flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px;">
+        <div style="background:#fff;border-radius:10px;border:1px solid #D4E6E3;overflow:hidden;position:relative;"
+             id="mapper-stage" onclick="handleMapperClick(event)">
+          <div style="padding:6px 12px;font-size:12px;font-weight:600;color:#6B8280;border-bottom:1px solid #f0f0f0;">
+            ${mapperState.species==='dog'?'Dog':'Cat'} &middot; ${VIEW_LABELS[mapperState.view]}
+            <span style="float:right;color:#0D7A6B;">${viewLesions.length} marked &bull; tap diagram to add</span>
+          </div>
+          <div style="position:relative;user-select:none;" id="diagram-wrap">
+            ${svg}
+            ${viewLesions.map(l => `
+              <div onclick="editLesion(${l.num},event)"
+                style="position:absolute;left:calc(${l.x}% - 14px);top:calc(${l.y}% - 14px);
+                       width:28px;height:28px;border-radius:50%;background:${l.color};
+                       display:flex;align-items:center;justify-content:center;
+                       color:#fff;font-size:11px;font-weight:700;cursor:pointer;
+                       box-shadow:0 2px 6px rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.7);
+                       z-index:10;">
+                ${l.num}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Findings list -->
+        ${viewLesions.length > 0 ? `
+        <div style="background:#fff;border-radius:10px;border:1px solid #D4E6E3;overflow:hidden;">
+          <div style="padding:10px 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6B8280;border-bottom:1px solid #f0f0f0;">
+            Findings on this view
+          </div>
+          ${viewLesions.map(l => `
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f8f8f8;">
+              <div style="width:20px;height:20px;border-radius:50%;background:${l.color};
+                          display:flex;align-items:center;justify-content:center;
+                          color:#fff;font-size:10px;font-weight:700;flex-shrink:0;">
+                ${l.num}
+              </div>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;">${l.label}</div>
+                ${l.note?`<div style="font-size:11px;color:#6B8280;">${esc(l.note)}</div>`:''}
+              </div>
+              <button onclick="deleteLesion(${l.num},event)"
+                style="background:none;border:none;color:#a32d2d;font-size:16px;cursor:pointer;padding:0 4px;">
+                &times;
+              </button>
+            </div>
+          `).join('')}
+        </div>
+        ` : `
+        <div style="text-align:center;padding:20px;color:#6B8280;font-size:13px;">
+          Tap anywhere on the diagram above to mark a lesion
+        </div>
+        `}
+      </div>
+
+      <!-- Lesion type picker modal -->
+      <div id="lesion-picker" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;
+           display:none;align-items:flex-end;">
+        <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;padding:20px 16px;max-height:80vh;overflow-y:auto;">
+          <div style="font-size:16px;font-weight:700;margin-bottom:14px;">Choose lesion type</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="lesion-type-list"></div>
+          <button onclick="closeLesionPicker()"
+            style="width:100%;margin-top:14px;padding:12px;border:1px solid #D4E6E3;border-radius:8px;
+                   background:#fff;font-size:14px;font-weight:600;color:#6B8280;">
+            Cancel
+          </button>
+        </div>
+      </div>
+
+    </div>
+  `;
+}
+
+// ── Interactions ──────────────────────────────────────────────────────────────
+let _pendingClick = null;
+
+function handleMapperClick(event) {
+  const stage = document.getElementById('mapper-stage');
+  const wrap = document.getElementById('diagram-wrap');
+  if (!stage || !wrap) return;
+
+  // Don't register clicks on pins or buttons
+  if (event.target.closest('button') || event.target.tagName === 'BUTTON') return;
+  // Only register on the SVG or diagram-wrap itself
+  if (!event.target.closest('#diagram-wrap') && event.target.id !== 'mapper-stage') return;
+
+  const rect = wrap.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width) * 100;
+  const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+  if (x < 0 || x > 100 || y < 0 || y > 100) return;
+
+  _pendingClick = { x: +x.toFixed(2), y: +y.toFixed(2) };
+  openLesionPicker();
+}
+
+function openLesionPicker() {
+  const picker = document.getElementById('lesion-picker');
+  const list = document.getElementById('lesion-type-list');
+  if (!picker || !list) return;
+
+  list.innerHTML = LESION_TYPES.map(lt => `
+    <button onclick="selectLesionType('${lt.id}','${lt.label}','${lt.color}')"
+      style="padding:10px 8px;border:1.5px solid #D4E6E3;border-radius:8px;background:#fff;
+             display:flex;align-items:center;gap:8px;cursor:pointer;text-align:left;">
+      <span style="width:14px;height:14px;border-radius:50%;background:${lt.color};flex-shrink:0;"></span>
+      <span style="font-size:12px;font-weight:600;color:#1A2B2A;">${lt.label}</span>
+    </button>
+  `).join('');
+
+  picker.style.display = 'flex';
+}
+
+function closeLesionPicker() {
+  const picker = document.getElementById('lesion-picker');
+  if (picker) picker.style.display = 'none';
+  _pendingClick = null;
+}
+
+function selectLesionType(id, label, color) {
+  closeLesionPicker();
+  if (!_pendingClick) return;
+
+  const note = ''; // Could add a note prompt here later
+  mapperState.lesions.push({
+    num:   mapperState.nextNum++,
+    view:  mapperState.view,
+    x:     _pendingClick.x,
+    y:     _pendingClick.y,
+    type:  id,
+    label: label,
+    color: color,
+    note:  note,
+  });
+  _pendingClick = null;
+  renderPWAMapper();
+}
+
+function editLesion(num, event) {
+  event.stopPropagation();
+  const lesion = mapperState.lesions.find(l => l.num === num);
+  if (!lesion) return;
+  const note = prompt('Note for this lesion (optional):', lesion.note || '');
+  if (note !== null) {
+    lesion.note = note;
+    renderPWAMapper();
+  }
+}
+
+function deleteLesion(num, event) {
+  event.stopPropagation();
+  if (!confirm('Remove this lesion marker?')) return;
+  mapperState.lesions = mapperState.lesions.filter(l => l.num !== num);
+  renderPWAMapper();
+}
+
+function setMapperSpecies(sp) {
+  mapperState.species = sp;
+  renderPWAMapper();
+}
+
+function setMapperView(v) {
+  mapperState.view = v;
+  renderPWAMapper();
+}
+
+
+// ── App ───────────────────────────────────────────────────────────────────────
+'use strict';
+
+// ── IndexedDB ─────────────────────────────────────────────────────────────────
+const DB_NAME = 'lesionlog';
+const DB_VER  = 1;
+let _db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    if (_db) { resolve(_db); return; }
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      // Settings
+      if (!db.objectStoreNames.contains('settings')) {
+        db.createObjectStore('settings', { keyPath: 'key' });
+      }
+      // Vets
+      if (!db.objectStoreNames.contains('vets')) {
+        db.createObjectStore('vets', { keyPath: 'id', autoIncrement: true });
+      }
+      // Patients
+      if (!db.objectStoreNames.contains('patients')) {
+        const ps = db.createObjectStore('patients', { keyPath: 'id', autoIncrement: true });
+        ps.createIndex('updated_at', 'updated_at');
+      }
+      // Lesion maps
+      if (!db.objectStoreNames.contains('maps')) {
+        const ms = db.createObjectStore('maps', { keyPath: 'id', autoIncrement: true });
+        ms.createIndex('patient_id', 'patient_id');
+      }
+    };
+    req.onsuccess = e => { _db = e.target.result; resolve(_db); };
+    req.onerror  = () => reject(req.error);
+  });
+}
+
+function dbGet(store, key) {
+  return openDB().then(db => new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  }));
+}
+
+function dbGetAll(store, indexName, keyRange) {
+  return openDB().then(db => new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const os = tx.objectStore(store);
+    const req = indexName ? os.index(indexName).getAll(keyRange) : os.getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror = () => rej(req.error);
+  }));
+}
+
+function dbPut(store, obj) {
+  return openDB().then(db => new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).put(obj);
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  }));
+}
+
+function dbDelete(store, key) {
+  return openDB().then(db => new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).delete(key);
+    req.onsuccess = () => res();
+    req.onerror = () => rej(req.error);
+  }));
+}
+
+// Simple password hash
+async function hashPw(pw) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw + 'vlm-pwa-2026'));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── App state ─────────────────────────────────────────────────────────────────
+const App = {
+  vet: null,         // logged-in vet object
+  clinic: null,      // clinic settings
+  patient: null,     // currently open patient
+  mapRecord: null,   // currently open map
+  screen: 'login',   // current top-level screen
+  tab: 'patients',   // current bottom nav tab
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmt = d => d ? new Date(d).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}) : '—';
+const now = () => new Date().toISOString();
+const specIcon = s => (s||'').toLowerCase().includes('feline') || s==='cat' ? '🐱' : '🐶';
+
+function toast(msg, isErr=false) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.style.background = isErr ? '#a32d2d' : '#1A2B2A';
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── Render root ───────────────────────────────────────────────────────────────
+function render() {
+  const root = $('root');
+  root.innerHTML = '';
+
+  if (App.screen === 'setup')  { root.appendChild(buildSetup()); return; }
+  if (App.screen === 'login')  { root.appendChild(buildLogin()); return; }
+
+  // Main app shell
+  root.innerHTML = `
+    <div id="topbar-slot"></div>
+    <div id="screen-slot" style="flex:1;overflow:hidden;display:flex;flex-direction:column;"></div>
+    <nav class="bottom-nav">
+      <button class="nav-btn ${App.tab==='patients'?'active':''}" onclick="switchTab('patients')"><span class="icon">🐾</span>Patients</button>
+      <button class="nav-btn ${App.tab==='mapper'?'active':''}" onclick="switchTab('mapper')"><span class="icon">📍</span>Mapper</button>
+      <button class="nav-btn ${App.tab==='team'?'active':''}" onclick="switchTab('team')"><span class="icon">👤</span>Team</button>
+      <button class="nav-btn ${App.tab==='settings'?'active':''}" onclick="switchTab('settings')"><span class="icon">⚙️</span>Settings</button>
+    </nav>
+    <div id="toast"></div>
+  `;
+
+  renderTab();
+}
+
+function switchTab(tab) {
+  App.tab = tab;
+  App.patient = tab === 'patients' ? App.patient : null;
+  renderTab();
+  // Update nav
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    if (b.textContent.trim().toLowerCase().startsWith(tab)) b.classList.add('active');
+  });
+}
+
+function renderTab() {
+  const slot = $('screen-slot');
+  if (!slot) return;
+  slot.innerHTML = '';
+  if (App.tab === 'patients') slot.appendChild(buildPatientsTab());
+  if (App.tab === 'mapper')   slot.appendChild(buildMapperTab());
+  if (App.tab === 'team')     slot.appendChild(buildTeamTab());
+  if (App.tab === 'settings') slot.appendChild(buildSettingsTab());
+}
+
+// ── Setup screen ──────────────────────────────────────────────────────────────
+function buildSetup() {
+  const el = document.createElement('div');
+  el.style.cssText = 'display:flex;flex-direction:column;height:100%;';
+  el.innerHTML = `
+    <div class="login-wrap" style="padding-top:calc(env(safe-area-inset-top,0px) + 32px);">
+      <div class="login-logo">LL</div>
+      <div class="login-title">LesionLog</div>
+      <div class="login-sub">Set up your clinic</div>
+      <div class="login-card" style="overflow-y:auto;max-height:70vh;">
+        <div class="field"><label>Clinic name</label><input id="s-clinic" type="text" placeholder="e.g. North Wellington Animal Hospital"></div>
+        <div class="field"><label>Your name</label><input id="s-name" type="text" placeholder="Dr. Jane Smith"></div>
+        <div class="field"><label>Email</label><input id="s-email" type="email" placeholder="you@clinic.com"></div>
+        <div class="field"><label>Password</label><input id="s-pw" type="password" placeholder="Min. 8 characters"></div>
+        <div class="field"><label>Confirm password</label><input id="s-pw2" type="password" placeholder="Re-enter password"></div>
+        <div id="s-err" style="display:none;" class="form-error"></div>
+        <button class="btn btn-primary btn-full" style="margin-top:6px;" onclick="doSetup()">Create clinic</button>
+      </div>
+    </div>
+  `;
+  return el;
+}
+
+async function doSetup() {
+  const clinic = $('s-clinic').value.trim();
+  const name   = $('s-name').value.trim();
+  const email  = $('s-email').value.trim();
+  const pw     = $('s-pw').value;
+  const pw2    = $('s-pw2').value;
+  const err    = $('s-err');
+  err.style.display = 'none';
+
+  if (!clinic || !name || !email || !pw) { err.textContent='All fields required.'; err.style.display='block'; return; }
+  if (pw.length < 8) { err.textContent='Password must be at least 8 characters.'; err.style.display='block'; return; }
+  if (pw !== pw2) { err.textContent='Passwords do not match.'; err.style.display='block'; return; }
+
+  const hash = await hashPw(pw);
+  await dbPut('settings', { key: 'clinic', name: clinic });
+  await dbPut('vets', { name, email: email.toLowerCase(), pw_hash: hash, role: 'admin', created_at: now() });
+
+  App.clinic = { name: clinic };
+  App.vet = { name, email: email.toLowerCase(), role: 'admin' };
+  App.screen = 'app';
+  App.tab = 'patients';
+  render();
+}
+
+// ── Login screen ──────────────────────────────────────────────────────────────
+function buildLogin() {
+  const el = document.createElement('div');
+  el.style.cssText = 'display:flex;flex-direction:column;height:100%;';
+  el.innerHTML = `
+    <div class="login-wrap" style="padding-top:calc(env(safe-area-inset-top,0px) + 32px);">
+      <div class="login-logo">LL</div>
+      <div class="login-title">LesionLog</div>
+      <div class="login-sub" id="login-clinic-name">Sign in to your clinic</div>
+      <div class="login-card">
+        <div class="field"><label>Email</label><input id="l-email" type="email" placeholder="your@email.com" autocomplete="email"></div>
+        <div class="field"><label>Password</label><input id="l-pw" type="password" placeholder="Password" autocomplete="current-password"></div>
+        <div id="l-err" style="display:none;" class="form-error"></div>
+        <button class="btn btn-primary btn-full" style="margin-top:6px;" onclick="doLogin()">Sign in</button>
+      </div>
+    </div>
+  `;
+  return el;
+}
+
+async function doLogin() {
+  const email = $('l-email').value.trim().toLowerCase();
+  const pw    = $('l-pw').value;
+  const err   = $('l-err');
+  err.style.display = 'none';
+  if (!email || !pw) { err.textContent='Please enter email and password.'; err.style.display='block'; return; }
+
+  const vets = await dbGetAll('vets');
+  const vet  = vets.find(v => v.email === email);
+  if (!vet) { err.textContent='Email not found.'; err.style.display='block'; return; }
+
+  const hash = await hashPw(pw);
+  if (vet.pw_hash !== hash) { err.textContent='Incorrect password.'; err.style.display='block'; return; }
+
+  App.vet = vet;
+  App.screen = 'app';
+  App.tab = 'patients';
+  render();
+}
+
+// ── Patients tab ──────────────────────────────────────────────────────────────
+function buildPatientsTab() {
+  const el = document.createElement('div');
+  el.style.cssText = 'display:flex;flex-direction:column;height:100%;position:relative;';
+
+  if (App.patient) {
+    el.appendChild(buildPatientDetail());
+    return el;
+  }
+
+  el.innerHTML = `
+    <div class="topbar">
+      <span class="topbar-logo">LL</span>
+      <span class="topbar-title">${esc(App.clinic?.name || 'LesionLog')}</span>
+      <button class="topbar-action" onclick="showNewPatientSheet()">+ New</button>
+    </div>
+    <div style="padding:10px 14px 4px;">
+      <input id="patient-search" type="search" placeholder="Search patients…"
+        style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:15px;background:var(--paper);"
+        oninput="loadPatientList()" autocomplete="off">
+    </div>
+    <div class="scroll" id="patient-list-container"></div>
+    <button class="fab" onclick="showNewPatientSheet()">+</button>
+  `;
+
+  setTimeout(loadPatientList, 0);
+  return el;
+}
+
+async function loadPatientList() {
+  const search = ($('patient-search')?.value || '').toLowerCase();
+  const container = $('patient-list-container');
+  if (!container) return;
+
+  const patients = await dbGetAll('patients');
+  const filtered = patients
+    .filter(p => !search ||
+      (p.name||'').toLowerCase().includes(search) ||
+      (p.owner_name||'').toLowerCase().includes(search) ||
+      (p.patient_id||'').toLowerCase().includes(search))
+    .sort((a,b) => (b.updated_at||'').localeCompare(a.updated_at||''));
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty"><span class="icon">🐾</span>${search ? 'No patients match your search.' : 'No patients yet.<br><strong>Tap + to add your first patient.</strong>'}</div>`;
+    return;
+  }
+
+  container.innerHTML = `<div class="section-hdr">${filtered.length} patient${filtered.length!==1?'s':''}</div>
+  <div class="card">
+    ${filtered.map(p => `
+      <div class="card-row" onclick="openPatient(${p.id})" style="cursor:pointer;">
+        <div class="card-row-icon">${specIcon(p.species)}</div>
+        <div class="card-row-text">
+          <div class="card-row-title">${esc(p.name)}</div>
+          <div class="card-row-sub">${esc(p.species)}${p.breed?' · '+esc(p.breed):''}${p.owner_name?' · '+esc(p.owner_name):''}</div>
+        </div>
+        <div class="card-row-right">›</div>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+async function openPatient(id) {
+  const patients = await dbGetAll('patients');
+  App.patient = patients.find(p => p.id === id) || null;
+  renderTab();
+}
+
+function buildPatientDetail() {
+  const p = App.patient;
+  const el = document.createElement('div');
+  el.style.cssText = 'display:flex;flex-direction:column;height:100%;';
+  el.innerHTML = `
+    <div class="topbar">
+      <button class="topbar-back" onclick="App.patient=null;renderTab();">‹</button>
+      <span class="topbar-title">${esc(p.name)}</span>
+      <button class="topbar-action" onclick="showEditPatientSheet(${p.id})">Edit</button>
+    </div>
+    <div class="scroll">
+      <div class="detail-grid">
+        <div class="detail-field"><label>Species</label><div class="val">${esc(p.species||'—')}</div></div>
+        <div class="detail-field"><label>Breed</label><div class="val">${esc(p.breed||'—')}</div></div>
+        <div class="detail-field"><label>Owner</label><div class="val">${esc(p.owner_name||'—')}</div></div>
+        <div class="detail-field"><label>Patient ID</label><div class="val">${esc(p.patient_id||'—')}</div></div>
+        <div class="detail-field"><label>Date of birth</label><div class="val">${fmt(p.dob)}</div></div>
+        <div class="detail-field"><label>Sex</label><div class="val">${p.sex==='M'?'Male':p.sex==='F'?'Female':'—'}</div></div>
+      </div>
+      ${p.notes ? `<div style="margin:10px 14px;padding:12px;background:var(--sunk);border-radius:10px;font-size:13.5px;color:var(--ink-s);">${esc(p.notes)}</div>` : ''}
+
+      <div class="section-hdr">Lesion maps</div>
+      <div id="maps-container"></div>
+
+      <div style="padding:10px 14px 24px;display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-primary btn-full" onclick="openMapperForPatient(${p.id})">📍 New exam in mapper</button>
+        <button class="btn btn-danger btn-full" onclick="deletePatient(${p.id})">Delete patient</button>
+      </div>
+    </div>
+  `;
+  setTimeout(() => loadMaps(p.id), 0);
+  return el;
+}
+
+async function loadMaps(patientId) {
+  const container = $('maps-container');
+  if (!container) return;
+  const maps = await dbGetAll('maps', 'patient_id', IDBKeyRange.only(patientId));
+  maps.sort((a,b) => (b.exam_date||'').localeCompare(a.exam_date||''));
+  if (maps.length === 0) {
+    container.innerHTML = `<div class="empty" style="padding:24px;"><span class="icon" style="font-size:28px;">📋</span>No exams yet. Tap "New exam in mapper" to start.</div>`;
+    return;
+  }
+  container.innerHTML = maps.map(m => `
+    <div class="map-card" onclick="openMapperForMap(${m.id})" style="cursor:pointer;">
+      <div class="map-card-info">
+        <div class="map-card-date">${fmt(m.exam_date)} · ${esc(m.species)} · ${esc((m.view||'').replace(/_/g,' '))}</div>
+        <div class="map-card-meta">${(m.lesions||[]).length} lesion${(m.lesions||[]).length!==1?'s':''} · ${esc(m.vet_name||'')}</div>
+      </div>
+      <div class="map-card-arrow">›</div>
+    </div>
+  `).join('');
+}
+
+// ── Patient form ──────────────────────────────────────────────────────────────
+function showNewPatientSheet() { showPatientSheet(null); }
+async function showEditPatientSheet(id) {
+  const patients = await dbGetAll('patients');
+  showPatientSheet(patients.find(p => p.id === id) || null);
+}
+
+function showPatientSheet(patient) {
+  const isNew = !patient;
+  showSheet(`${isNew ? 'New' : 'Edit'} patient`, `
+    <div class="form-body">
+      <div class="field"><label>Patient name *</label><input id="pf-name" type="text" value="${esc(patient?.name||'')}" placeholder="e.g. Biscuit"></div>
+      <div class="field"><label>Species *</label>
+        <select id="pf-species">
+          <option value="Canine" ${(!patient||patient.species==='Canine')?'selected':''}>Dog (Canine)</option>
+          <option value="Feline" ${patient?.species==='Feline'?'selected':''}>Cat (Feline)</option>
+        </select>
+      </div>
+      <div class="field"><label>Breed</label><input id="pf-breed" type="text" value="${esc(patient?.breed||'')}" placeholder="e.g. Beagle"></div>
+      <div class="field"><label>Owner name</label><input id="pf-owner" type="text" value="${esc(patient?.owner_name||'')}" placeholder="e.g. Hawkins"></div>
+      <div class="field"><label>Patient ID</label><input id="pf-pid" type="text" value="${esc(patient?.patient_id||'')}" placeholder="e.g. 2096"></div>
+      <div class="field"><label>Date of birth</label><input id="pf-dob" type="date" value="${esc(patient?.dob||'')}"></div>
+      <div class="field"><label>Sex</label>
+        <select id="pf-sex">
+          <option value="">Unknown</option>
+          <option value="M" ${patient?.sex==='M'?'selected':''}>Male</option>
+          <option value="F" ${patient?.sex==='F'?'selected':''}>Female</option>
+        </select>
+      </div>
+      <div class="field"><label>Notes</label><textarea id="pf-notes" rows="2" placeholder="General notes…">${esc(patient?.notes||'')}</textarea></div>
+      <div id="pf-err" style="display:none;" class="form-error"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" style="flex:1;" onclick="closeSheet()">Cancel</button>
+      <button class="btn btn-primary" style="flex:2;" onclick="savePatient(${patient?.id||'null'})">${isNew?'Create patient':'Save changes'}</button>
+    </div>
+  `);
+}
+
+async function savePatient(id) {
+  const name = $('pf-name').value.trim();
+  const err  = $('pf-err');
+  err.style.display = 'none';
+  if (!name) { err.textContent='Patient name is required.'; err.style.display='block'; return; }
+
+  const data = {
+    name,
+    species:     $('pf-species').value,
+    breed:       $('pf-breed').value.trim(),
+    owner_name:  $('pf-owner').value.trim(),
+    patient_id:  $('pf-pid').value.trim(),
+    dob:         $('pf-dob').value,
+    sex:         $('pf-sex').value,
+    notes:       $('pf-notes').value.trim(),
+    updated_at:  now(),
+  };
+  if (id !== null && id !== 'null') {
+    data.id = id;
+    data.created_at = (await dbGet('patients', id))?.created_at || now();
+  } else {
+    data.created_at = now();
+  }
+
+  const newId = await dbPut('patients', data);
+  closeSheet();
+  const patients = await dbGetAll('patients');
+  App.patient = patients.find(p => p.id === (id||newId)) || null;
+  renderTab();
+  toast(id ? 'Patient updated ✓' : 'Patient created ✓');
+}
+
+async function deletePatient(id) {
+  if (!confirm('Delete this patient and all their lesion maps? This cannot be undone.')) return;
+  await dbDelete('patients', id);
+  const allMaps = await dbGetAll('maps', 'patient_id', IDBKeyRange.only(id));
+  await Promise.all(allMaps.map(m => dbDelete('maps', m.id)));
+  App.patient = null;
+  renderTab();
+  toast('Patient deleted');
+}
+
+// ── Mapper tab ────────────────────────────────────────────────────────────────
+function buildMapperTab() {
+  const el = document.createElement('div');
+  el.style.cssText = 'display:flex;flex-direction:column;height:100%;';
+  el.innerHTML = `
+    <div class="topbar">
+      <span class="topbar-logo">LL</span>
+      <span class="topbar-title" id="mapper-title">Lesion Mapper</span>
+      <button class="topbar-action" id="mapper-save-btn" onclick="saveCurrentMap()" style="display:none;">Save</button>
+    </div>
+    <div id="mapper-wrap" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
+  `;
+  setTimeout(() => initMapper(), 0);
+  return el;
+}
+
+function openMapperForPatient(patientId) {
+  App.mapRecord = { patient_id: patientId, isNew: true };
+  switchTab('mapper');
+}
+
+async function openMapperForMap(mapId) {
+  const maps = await dbGetAll('maps');
+  const map = maps.find(m => m.id === mapId);
+  if (map) { App.mapRecord = { ...map, isNew: false }; }
+  switchTab('mapper');
+}
+
+function initMapper() {
+  const wrap = $('mapper-wrap');
+  const saveBtn = $('mapper-save-btn');
+  if (!wrap) return;
+
+  // Create the #app div that the mapper core needs
+  wrap.innerHTML = '<div id="app"></div>';
+
+  const mr = App.mapRecord;
+  let initState = null;
+
+  if (mr) {
+    const patient = App.patient;
+    initState = {
+      patient: {
+        name: patient?.owner_name || patient?.name || '',
+        id:   patient?.patient_id || '',
+        vet:  App.vet?.name || '',
+        date: mr.exam_date || new Date().toISOString().slice(0,10),
+      },
+      species: mr.isNew
+        ? (App.patient?.species === 'Feline' ? 'cat' : 'dog')
+        : (mr.species === 'Feline' ? 'cat' : 'dog'),
+      view:    mr.isNew ? 'lateral_right' : (mr.view || 'lateral_right'),
+      lesions: mr.isNew ? [] : (mr.lesions || []),
+      nextNum: mr.isNew ? 1 : Math.max(0, ...(mr.lesions||[]).map(l=>l.num||0)) + 1,
+    };
+    if (saveBtn) saveBtn.style.display = 'block';
+  }
+
+  // Initialise the mapper
+  if (typeof initMapperExternal === 'function' && initState) {
+    initMapperExternal(initState, () => {});
+  } else if (typeof render === 'function') {
+    // mapper-core uses global render()
+    if (initState && typeof state !== 'undefined') {
+      if (initState.patient) Object.assign(state.patient, initState.patient);
+      if (initState.species) state.species = initState.species;
+      if (initState.view)    state.view    = initState.view;
+      if (initState.lesions) state.lesions = initState.lesions;
+      if (initState.nextNum) state.nextNum = initState.nextNum;
+      if (typeof settings !== 'undefined') settings.vet = App.vet?.name || '';
+    }
+    render();
+  }
+
+  const title = $('mapper-title');
+  if (title && App.patient) title.textContent = `Mapper — ${App.patient.name}`;
+}
+
+async function saveCurrentMap() {
+  if (typeof getMapperState === 'undefined') { toast('Mapper not ready', true); return; }
+  const state = getMapperState();
+  const mr = App.mapRecord;
+  if (!mr) { toast('No patient selected. Open a patient first.', true); return; }
+
+  const mapData = {
+    patient_id: mr.patient_id,
+    vet_name:   App.vet?.name || '',
+    exam_date:  state.patient.date || new Date().toISOString().slice(0,10),
+    species:    state.species === 'cat' ? 'Feline' : 'Canine',
+    view:       state.view,
+    lesions:    [...state.lesions],
+    created_at: mr.created_at || now(),
+    updated_at: now(),
+  };
+  if (!mr.isNew && mr.id) mapData.id = mr.id;
+
+  const newId = await dbPut('maps', mapData);
+  App.mapRecord = { ...mapData, id: newId || mr.id, isNew: false };
+
+  // Update patient updated_at
+  const patient = await dbGet('patients', mr.patient_id);
+  if (patient) { patient.updated_at = now(); await dbPut('patients', patient); }
+
+  toast('Map saved ✓');
+}
+
+// ── Team tab ──────────────────────────────────────────────────────────────────
+function buildTeamTab() {
+  const el = document.createElement('div');
+  el.style.cssText = 'display:flex;flex-direction:column;height:100%;';
+  el.innerHTML = `
+    <div class="topbar">
+      <span class="topbar-logo">LL</span>
+      <span class="topbar-title">Team</span>
+      <button class="topbar-action" onclick="showAddVetSheet()">+ Add</button>
+    </div>
+    <div class="scroll" id="team-list"></div>
+  `;
+  setTimeout(loadTeam, 0);
+  return el;
+}
+
+async function loadTeam() {
+  const container = $('team-list');
+  if (!container) return;
+  const vets = await dbGetAll('vets');
+  if (vets.length === 0) { container.innerHTML = '<div class="empty"><span class="icon">👤</span>No team members yet.</div>'; return; }
+  container.innerHTML = `<div class="section-hdr">${vets.length} vet${vets.length!==1?'s':''}</div>
+  <div class="card">
+    ${vets.map(v => `
+      <div class="card-row">
+        <div class="card-row-icon" style="width:40px;height:40px;border-radius:50%;background:var(--teal-l);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--teal);">${(v.name||'?')[0].toUpperCase()}</div>
+        <div class="card-row-text">
+          <div class="card-row-title">${esc(v.name)}</div>
+          <div class="card-row-sub">${esc(v.email)}</div>
+        </div>
+        ${v.id !== App.vet?.id ? `<button style="background:none;border:none;color:#a32d2d;font-size:13px;font-weight:600;cursor:pointer;" onclick="removeVet(${v.id})">Remove</button>` : '<span style="font-size:12px;color:var(--ink-f);">You</span>'}
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+function showAddVetSheet() {
+  showSheet('Add vet', `
+    <div class="form-body">
+      <div class="field"><label>Full name</label><input id="av-name" type="text" placeholder="Dr. Jane Smith"></div>
+      <div class="field"><label>Email</label><input id="av-email" type="email" placeholder="jane@clinic.com"></div>
+      <div class="field"><label>Temporary password</label><input id="av-pw" type="text" placeholder="They can change it in Settings"></div>
+      <div id="av-err" style="display:none;" class="form-error"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" style="flex:1;" onclick="closeSheet()">Cancel</button>
+      <button class="btn btn-primary" style="flex:2;" onclick="addVet()">Add vet</button>
+    </div>
+  `);
+}
+
+async function addVet() {
+  const name  = $('av-name').value.trim();
+  const email = $('av-email').value.trim().toLowerCase();
+  const pw    = $('av-pw').value;
+  const err   = $('av-err');
+  err.style.display = 'none';
+  if (!name || !email || !pw) { err.textContent='All fields required.'; err.style.display='block'; return; }
+  const vets = await dbGetAll('vets');
+  if (vets.find(v => v.email === email)) { err.textContent='Email already exists.'; err.style.display='block'; return; }
+  const hash = await hashPw(pw);
+  await dbPut('vets', { name, email, pw_hash: hash, role: 'vet', created_at: now() });
+  closeSheet();
+  loadTeam();
+  toast('Vet added ✓');
+}
+
+async function removeVet(id) {
+  const vet = await dbGet('vets', id);
+  if (!confirm(`Remove ${vet?.name || 'this vet'}? They will no longer be able to sign in.`)) return;
+  await dbDelete('vets', id);
+  loadTeam();
+  toast('Vet removed');
+}
+
+// ── Settings tab ──────────────────────────────────────────────────────────────
+function buildSettingsTab() {
+  const el = document.createElement('div');
+  el.style.cssText = 'display:flex;flex-direction:column;height:100%;';
+  el.innerHTML = `
+    <div class="topbar">
+      <span class="topbar-logo">LL</span>
+      <span class="topbar-title">Settings</span>
+    </div>
+    <div class="scroll" style="padding:12px 14px;">
+      <div class="section-hdr">Account</div>
+      <div class="settings-section">
+        <div class="card">
+          <div class="card-row">
+            <div class="card-row-icon" style="width:40px;height:40px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;">${(App.vet?.name||'?')[0].toUpperCase()}</div>
+            <div class="card-row-text">
+              <div class="card-row-title">${esc(App.vet?.name||'')}</div>
+              <div class="card-row-sub">${esc(App.vet?.email||'')}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-hdr">Clinic</div>
+      <div class="settings-section">
+        <div class="card">
+          <div class="card-row">
+            <div class="card-row-text"><div class="card-row-title">${esc(App.clinic?.name||'')}</div><div class="card-row-sub">Clinic name</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-hdr">Security</div>
+      <div class="settings-section">
+        <div class="card" style="padding:16px;">
+          <div class="field"><label>Current password</label><input id="pw-cur" type="password" placeholder="Current password"></div>
+          <div class="field"><label>New password</label><input id="pw-new" type="password" placeholder="New password (min. 8 chars)"></div>
+          <div class="field"><label>Confirm new</label><input id="pw-con" type="password" placeholder="Confirm new password"></div>
+          <div id="pw-err" style="display:none;" class="form-error"></div>
+          <button class="btn btn-primary btn-full" onclick="changePassword()">Change password</button>
+        </div>
+      </div>
+
+      <div class="section-hdr">Cloud Sync</div>
+      <div class="settings-section">
+        <div class="card" style="padding:16px;">
+          <p style="font-size:13px;color:var(--ink-s);margin-bottom:10px;">Sync with cloud so all devices share the same patients and maps.</p>
+          <div id="sync-status" style="font-size:12px;color:var(--ink-f);margin-bottom:10px;min-height:16px;"></div>
+          <button id="sync-btn" class="btn btn-primary btn-full" onclick="doSync()">☁ Sync now</button>
+        </div>
+      </div>
+      <div class="section-hdr">Data</div>
+      <div class="settings-section">
+        <div class="card">
+          <div class="card-row" onclick="exportData()" style="cursor:pointer;">
+            <div class="card-row-text"><div class="card-row-title">Export all data (JSON)</div><div class="card-row-sub">Download a full backup of all patients and maps</div></div>
+            <div class="card-row-right">›</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:24px 0;">
+        <button class="btn btn-full" style="color:var(--danger);border-color:var(--danger);" onclick="signOut()">Sign out</button>
+      </div>
+
+      <div style="text-align:center;font-size:11.5px;color:var(--ink-f);padding-bottom:24px;">
+        LesionLog PWA · Data stored locally on this device<br>
+        <span style="color:var(--teal-m);">Cloud sync coming soon</span>
+      </div>
+    </div>
+  `;
+  return el;
+}
+
+async function changePassword() {
+  const cur  = $('pw-cur').value;
+  const nw   = $('pw-new').value;
+  const con  = $('pw-con').value;
+  const err  = $('pw-err');
+  err.style.display = 'none';
+  if (!cur || !nw) { err.textContent='All fields required.'; err.style.display='block'; return; }
+  if (nw.length < 8) { err.textContent='New password must be at least 8 characters.'; err.style.display='block'; return; }
+  if (nw !== con) { err.textContent='Passwords do not match.'; err.style.display='block'; return; }
+  const curHash = await hashPw(cur);
+  const vet = await dbGet('vets', App.vet.id);
+  if (vet.pw_hash !== curHash) { err.textContent='Current password incorrect.'; err.style.display='block'; return; }
+  vet.pw_hash = await hashPw(nw);
+  await dbPut('vets', vet);
+  $('pw-cur').value = ''; $('pw-new').value = ''; $('pw-con').value = '';
+  toast('Password changed ✓');
+}
+
+async function exportData() {
+  const patients = await dbGetAll('patients');
+  const maps     = await dbGetAll('maps');
+  const vets     = await dbGetAll('vets');
+  const clinic   = await dbGet('settings', 'clinic');
+  const data = { clinic, vets: vets.map(v=>({...v, pw_hash:undefined})), patients, maps, exported_at: now() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `lesionlog-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('Backup downloaded ✓');
+}
+
+function signOut() {
+  if (!confirm('Sign out?')) return;
+  App.vet = null;
+  App.screen = 'login';
+  render();
+}
+
+// ── Bottom sheet ──────────────────────────────────────────────────────────────
+function showSheet(title, bodyHtml) {
+  let backdrop = $('sheet-backdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.id = 'sheet-backdrop';
+    backdrop.className = 'sheet-backdrop';
+    backdrop.onclick = e => { if (e.target === backdrop) closeSheet(); };
+    backdrop.innerHTML = `<div class="sheet" id="sheet"><div class="sheet-handle"></div><div class="sheet-title" id="sheet-title"></div><div class="sheet-body" id="sheet-body"></div></div>`;
+    document.body.appendChild(backdrop);
+  }
+  $('sheet-title').textContent = title;
+  $('sheet-body').innerHTML = bodyHtml;
+  backdrop.classList.add('open');
+  setTimeout(() => { $('sheet').classList.add('open'); }, 10);
+  // Focus first input
+  setTimeout(() => { const inp = $('sheet-body').querySelector('input'); if (inp) inp.focus(); }, 300);
+}
+
+function closeSheet() {
+  const sheet = $('sheet');
+  const backdrop = $('sheet-backdrop');
+  if (sheet) sheet.classList.remove('open');
+  setTimeout(() => { if (backdrop) backdrop.classList.remove('open'); }, 300);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+
+// ── Sync ──────────────────────────────────────────────────────────────────────
+async function doSync() {
+  const btn = document.getElementById('sync-btn');
+  const status = document.getElementById('sync-status');
+  if (btn) { btn.disabled = true; btn.textContent = 'Syncing…'; }
+  try {
+    const patients = await dbGetAll('patients');
+    const maps     = await dbGetAll('maps');
+    const vets     = await dbGetAll('vets');
+    const clinic   = await dbGet('settings', 'clinic');
+    for (const p of patients) { if (!p.sync_id) { p.sync_id = LesionLogSync.generateUUID(); await dbPut('patients', p); } }
+    for (const m of maps) {
+      if (!m.sync_id) { m.sync_id = LesionLogSync.generateUUID(); await dbPut('maps', m); }
+      const pat = patients.find(p => p.id === m.patient_id);
+      if (pat) m.patient_sync_id = pat.sync_id;
+    }
+    const result = await LesionLogSync.syncAll(
+      { clinic, vets, patients, maps },
+      msg => { if (status) status.textContent = msg; }
+    );
+    const lastSync = new Date().toLocaleString();
+    await dbPut('settings', { key: 'last_sync', value: lastSync });
+    if (status) status.textContent = 'Last synced: ' + lastSync;
+    if (btn) { btn.disabled = false; btn.textContent = '☁ Sync now'; }
+    toast('Sync complete ✓');
+    renderTab();
+  } catch(e) {
+    if (status) status.textContent = 'Sync failed: ' + e.message;
+    if (btn) { btn.disabled = false; btn.textContent = '☁ Sync now'; }
+    toast('Sync failed: ' + e.message, true);
+  }
+}
+
+async function boot() {
+  // Load CSS
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'app.css';
+  document.head.appendChild(link);
+
+  // Also load mapper CSS
+  const mapperCss = document.createElement('link');
+  mapperCss.rel = 'stylesheet';
+  mapperCss.href = 'mapper-core.css';
+  document.head.appendChild(mapperCss);
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
+  // Check if setup needed
+  const vets = await dbGetAll('vets');
+  const clinicSetting = await dbGet('settings', 'clinic');
+
+  if (vets.length === 0) {
+    App.screen = 'setup';
+  } else {
+    App.clinic = clinicSetting;
+    App.screen = 'login';
+  }
+
+  render();
+}
+
+// Add mapper bridge for PWA context
+window.addEventListener('load', () => {
+  // Patch mapper's initMapperExternal if not defined
+  if (typeof window.initMapperExternal === 'undefined') {
+    window.initMapperExternal = function(initState, cb) {
+      if (typeof state !== 'undefined') {
+        if (initState.patient) Object.assign(state.patient, initState.patient);
+        if (initState.species) state.species = initState.species;
+        if (initState.view)    state.view    = initState.view;
+        if (initState.lesions) state.lesions = initState.lesions;
+        if (initState.nextNum) state.nextNum = initState.nextNum;
+      }
+      if (typeof settings !== 'undefined' && initState.patient) {
+        settings.vet = initState.patient.vet || '';
+      }
+      if (typeof render === 'function') render();
+      if (cb) cb(() => typeof state !== 'undefined' ? state : null);
+    };
+  }
+  boot();
+});
+
+</script>
+</body>
+</html>
