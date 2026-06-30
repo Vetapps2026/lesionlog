@@ -1,0 +1,24 @@
+{
+  "name": "LesionLog",
+  "short_name": "LesionLog",
+  "description": "Veterinary lesion mapping for dogs and cats",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#063D35",
+  "theme_color": "#0D7A6B",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
