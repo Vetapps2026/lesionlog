@@ -285,6 +285,18 @@ window.LesionLogSync = { syncAll, generateUUID, SUPABASE_URL, SUPABASE_KEY };
 
 // ── Standalone Mapper ─────────────────────────────────────────────────────────
 
+// ── SVG helper functions ─────────────────────────────────────────────────────
+function jointMarker(cx, cy, kind){
+  return `<circle cx="${cx}" cy="${cy}" r="7" fill="none" stroke="#5b6670" stroke-width="1.3" stroke-dasharray="2.5,2" opacity="0.55"/>`;
+}
+// legLabel draws a small circular badge with R/L text directly on a leg.
+function legLabel(cx, cy, side){
+  const bg = side === 'R' ? '#cfe7ff' : '#ffe2cf';
+  const fg = side === 'R' ? '#0b4f8a' : '#9a4b0b';
+  return `<g><circle cx="${cx}" cy="${cy}" r="9" fill="${bg}" stroke="#ffffff" stroke-width="1.5"/><text x="${cx}" y="${cy+3.5}" text-anchor="middle" font-size="10" font-weight="700" fill="${fg}" font-family="Arial, sans-serif">${side}</text></g>`;
+}
+
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // LesionLog PWA — Standalone Mapper Module (no external dependencies)
 // ═══════════════════════════════════════════════════════════════════════════════
