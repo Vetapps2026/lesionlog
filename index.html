@@ -1528,6 +1528,14 @@ function buildSettingsTab() {
         </div>
       </div>
 
+      <div class="section-hdr">Cloud Sync</div>
+      <div class="settings-section" style="margin:0 0 8px;">
+        <div class="card" style="margin:0 14px;padding:16px;">
+          <p style="font-size:13px;color:var(--ink-s);margin-bottom:10px;line-height:1.5;">Sync patients and lesion maps with the cloud so all your devices stay up to date.</p>
+          <div id="sync-status" style="font-size:12px;color:var(--ink-f);margin-bottom:10px;min-height:16px;"></div>
+          <button id="sync-btn" class="btn btn-primary btn-full" onclick="doSync()">☁ Sync now</button>
+        </div>
+      </div>
       <div class="section-hdr">Data</div>
       <div class="settings-section">
         <div class="card">
@@ -1619,6 +1627,91 @@ function closeSheet() {
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
+// ── Cloud Sync ────────────────────────────────────────────────────────────────
+async function doSync() {
+  const btn = document.getElementById('sync-btn');
+  const status = document.getElementById('sync-status');
+  if (btn) { btn.disabled = true; btn.textContent = 'Syncing…'; }
+  try {
+    const patients = await dbGetAll('patients');
+    const maps     = await dbGetAll('maps');
+    const vets     = await dbGetAll('vets');
+    const clinic   = await dbGet('settings', 'clinic');
+
+    // Ensure all records have sync_ids
+    for (const p of patients) {
+      if (!p.sync_id) { p.sync_id = LesionLogSync.generateUUID(); await dbPut('patients', p); }
+    }
+    for (const m of maps) {
+      if (!m.sync_id) { m.sync_id = LesionLogSync.generateUUID(); await dbPut('maps', m); }
+      const pat = patients.find(p => p.id === m.patient_id);
+      if (pat) m.patient_sync_id = pat.sync_id;
+    }
+    for (const v of vets) {
+      if (!v.sync_id) { v.sync_id = LesionLogSync.generateUUID(); await dbPut('vets', v); }
+    }
+
+    const result = await LesionLogSync.syncAll(
+      { clinic, vets, patients, maps },
+      msg => { if (status) status.textContent = msg; }
+    );
+
+    // Merge remote patients into local
+    const allPats = await dbGetAll('patients');
+    for (const rp of result.patients) {
+      const local = allPats.find(p => p.sync_id === rp.id);
+      const remoteUpdated = new Date(rp.updated_at).getTime();
+      const localUpdated  = local ? new Date(local.updated_at || 0).getTime() : 0;
+      if (!local || remoteUpdated > localUpdated) {
+        await dbPut('patients', {
+          ...(local || {}),
+          id: local?.id,
+          sync_id: rp.id,
+          name: rp.name, species: rp.species,
+          breed: rp.breed || '', owner_name: rp.owner_name || '',
+          patient_id: rp.patient_id || '', dob: rp.dob || '',
+          sex: rp.sex || '', notes: rp.notes || '',
+          updated_at: rp.updated_at, created_at: rp.created_at,
+        });
+      }
+    }
+
+    // Merge remote maps
+    const allMaps = await dbGetAll('maps');
+    const allPats2 = await dbGetAll('patients');
+    for (const rm of result.maps) {
+      const local = allMaps.find(m => m.sync_id === rm.id);
+      const remoteUpdated = new Date(rm.updated_at).getTime();
+      const localUpdated  = local ? new Date(local.updated_at || 0).getTime() : 0;
+      const pat = allPats2.find(p => p.sync_id === rm.patient_id);
+      if ((!local || remoteUpdated > localUpdated) && pat) {
+        await dbPut('maps', {
+          ...(local || {}),
+          id: local?.id,
+          sync_id: rm.id,
+          patient_id: pat.id,
+          vet_name: rm.vet_name || '',
+          exam_date: rm.exam_date,
+          species: rm.species, view: rm.view,
+          lesions: rm.lesions || [], notes: rm.notes || '',
+          updated_at: rm.updated_at, created_at: rm.created_at,
+        });
+      }
+    }
+
+    const lastSync = new Date().toLocaleString();
+    await dbPut('settings', { key: 'last_sync', value: lastSync });
+    if (status) status.textContent = 'Last synced: ' + lastSync;
+    if (btn) { btn.disabled = false; btn.textContent = '☁ Sync now'; }
+    toast('Sync complete ✓');
+    renderTab();
+  } catch(e) {
+    if (status) status.textContent = 'Sync failed: ' + e.message;
+    if (btn) { btn.disabled = false; btn.textContent = '☁ Sync now'; }
+    toast('Sync failed: ' + e.message, true);
+  }
+}
+
 async function boot() {
   // Load CSS
   const link = document.createElement('link');
