@@ -1263,15 +1263,60 @@ async function deletePatient(id) {
 function buildMapperTab() {
   const el = document.createElement('div');
   el.style.cssText = 'display:flex;flex-direction:column;height:100%;';
+
+  if (!App.mapRecord) {
+    el.innerHTML = `
+      <div class="topbar">
+        <span class="topbar-logo">LL</span>
+        <span class="topbar-title">Lesion Mapper</span>
+      </div>
+      <div class="scroll">
+        <div class="empty" style="padding-top:60px;">
+          <span style="font-size:36px;display:block;margin-bottom:12px;">+</span>
+          <strong>No exam open</strong><br><br>
+          Open a patient from the Patients tab,<br>then tap <strong>"New exam in mapper"</strong>.
+          <div style="margin-top:24px;">
+            <button class="btn btn-primary" onclick="switchTab('patients')">Go to Patients</button>
+          </div>
+        </div>
+      </div>
+    `;
+    return el;
+  }
+
   el.innerHTML = `
     <div class="topbar">
       <span class="topbar-logo">LL</span>
-      <span class="topbar-title" id="mapper-title">Lesion Mapper</span>
-      <button class="topbar-action" id="mapper-save-btn" onclick="saveCurrentMap()" style="display:none;">Save</button>
+      <span class="topbar-title">${App.patient ? 'Mapper — ' + App.patient.name : 'Lesion Mapper'}</span>
+      <button class="topbar-action" onclick="saveCurrentMap()">Save</button>
     </div>
-    <div id="mapper-wrap" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
+    <div id="mapper-wrap" style="flex:1;overflow:auto;-webkit-overflow-scrolling:touch;"></div>
   `;
-  setTimeout(() => initMapper(), 0);
+
+  setTimeout(() => {
+    const wrap = document.getElementById('mapper-wrap');
+    if (!wrap) return;
+    const mr = App.mapRecord;
+    const patient = App.patient;
+    try {
+      initPWAMapper(wrap, {
+        species: mr.isNew
+          ? (patient?.species === 'Feline' ? 'cat' : 'dog')
+          : (mr.species === 'Feline' ? 'cat' : 'dog'),
+        view:    mr.isNew ? 'lateral_right' : (mr.view || 'lateral_right'),
+        lesions: mr.isNew ? [] : (mr.lesions || []),
+        nextNum: mr.isNew ? 1 : Math.max(1, ...(mr.lesions||[]).map(l=>l.num||0)) + 1,
+        patient: {
+          name: patient?.owner_name || patient?.name || '',
+          id:   patient?.patient_id || '',
+          vet:  App.vet?.name || '',
+          date: mr.exam_date || new Date().toISOString().slice(0,10),
+        },
+      }, null);
+    } catch(e) {
+      if (wrap) wrap.innerHTML = `<div style="padding:24px;color:#a32d2d;background:#fcebeb;margin:14px;border-radius:10px;font-size:13px;">Mapper error: ${e.message}</div>`;
+    }
+  }, 50);
   return el;
 }
 
@@ -1338,17 +1383,19 @@ function initMapper() {
 }
 
 async function saveCurrentMap() {
-  if (typeof state === 'undefined') { toast('Mapper not ready', true); return; }
   const mr = App.mapRecord;
   if (!mr) { toast('No patient selected. Open a patient first.', true); return; }
+
+  const ms = getMapperState();
+  if (!ms) { toast('Mapper not ready — mark at least one lesion first.', true); return; }
 
   const mapData = {
     patient_id: mr.patient_id,
     vet_name:   App.vet?.name || '',
-    exam_date:  state.patient.date || new Date().toISOString().slice(0,10),
-    species:    state.species === 'cat' ? 'Feline' : 'Canine',
-    view:       state.view,
-    lesions:    [...state.lesions],
+    exam_date:  ms.patient.date || new Date().toISOString().slice(0,10),
+    species:    ms.species === 'cat' ? 'Feline' : 'Canine',
+    view:       ms.view,
+    lesions:    [...ms.lesions],
     created_at: mr.created_at || now(),
     updated_at: now(),
   };
@@ -1357,7 +1404,6 @@ async function saveCurrentMap() {
   const newId = await dbPut('maps', mapData);
   App.mapRecord = { ...mapData, id: newId || mr.id, isNew: false };
 
-  // Update patient updated_at
   const patient = await dbGet('patients', mr.patient_id);
   if (patient) { patient.updated_at = now(); await dbPut('patients', patient); }
 
